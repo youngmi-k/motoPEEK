@@ -39,10 +39,18 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> captureImage() async {
     if (controller != null && controller!.value.isInitialized) {
-      final image = await controller!.takePicture();
-      setState(() {
-        imageFile = image;
-      });
+      try {
+        final image = await controller!.takePicture();
+        setState(() {
+          imageFile = image;
+        });
+
+        // 로그 추가 (촬영 성공 시 출력)
+        print('사진 촬영 성공: ${image.path}');
+      } catch (e) {
+        // 오류 발생 시 로그 출력
+        print('사진 촬영 실패: $e');
+      }
     }
   }
 
