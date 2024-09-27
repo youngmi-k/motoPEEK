@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 권한 설정: 필요한 권한들을 여기 추가 -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <!-- 카메라 기능 명시 -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:label="moto_peek"
         android:name="${applicationName}"

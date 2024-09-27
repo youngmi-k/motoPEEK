@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
 import 'camera_controller.dart';
+import 'package:camera/camera.dart';
 import 'dart:io';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:moto_peek/api/vision_api_service.dart'; // 서비스 클래스 임포트
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await _requestPermission(); // 권한 요청
   runApp(const MyApp());
+}
+
+Future<void> _requestPermission() async {
+  var status = await Permission.camera.status;
+  if (!status.isGranted) {
+    await Permission.camera.request();
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -16,37 +29,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'motoPEEK',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       //home: const MyHomePage(title: 'Flutter Demo Home Page'),
-      home: Navigator(
-        pages: [
-          MaterialPage(child: CameraScreen()),
-          MaterialPage(child: ImageAnalyzerScreen()),
-        ],
-        onPopPage: (route, result) => route.didPop(result),
-      ),
+      home: CameraScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+/*class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
   // This widget is the home page of your application. It is stateful, meaning
@@ -62,9 +54,9 @@ class MyHomePage extends StatefulWidget {
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
-}
+}*/
 
-class _MyHomePageState extends State<MyHomePage> {
+/*class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
   void _incrementCounter() {
@@ -132,9 +124,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
-}
+}*/
 
-class ImageAnalyzerScreen extends StatelessWidget {
+/*class ImageAnalyzerScreen extends StatelessWidget {
   final VisionApiService _visionApiService = VisionApiService('AIzaSyA9uz_E1Ec9bysgKutXk5MOGI8HEi8coeQ');
 
   void _analyzeImage(File image) {
@@ -156,6 +148,80 @@ class ImageAnalyzerScreen extends StatelessWidget {
           },
           child: Text('Analyze Image'),
         ),
+      ),
+    );
+  }
+}*/
+
+class CameraScreen extends StatefulWidget {
+  @override
+  _CameraScreenState createState() => _CameraScreenState();
+}
+
+class _CameraScreenState extends State<CameraScreen> {
+  late CameraController _controller;
+  late Future<void> _initializeControllerFuture;
+  final VisionApiService _visionApiService = VisionApiService('AIzaSyA9uz_E1Ec9bysgKutXk5MOGI8HEi8coeQ');
+
+  @override
+  void initState() {
+    super.initState();
+    // 카메라 초기화
+    _initializeCamera();
+  }
+
+  void _initializeCamera() async {
+    final cameras = await availableCameras();
+    final firstCamera = cameras.first;
+    _controller = CameraController(firstCamera, ResolutionPreset.high);
+    _initializeControllerFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _takePictureAndAnalyze() async {
+    try {
+      // 카메라 초기화가 완료될 때까지 대기
+      await _initializeControllerFuture;
+
+      // 파일 저장 경로 지정
+      final directory = await getTemporaryDirectory();
+      final path = join(directory.path, '${DateTime.now()}.png');
+
+      // 사진 촬영 및 저장
+      final XFile image = await _controller.takePicture();
+      final File imageFile = File(image.path);
+
+      // 파일을 API로 전달하여 분석 수행
+      await _visionApiService.analyzeImage(imageFile);
+
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Camera Test')),
+      body: FutureBuilder<void>(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            // 카메라 화면 표시
+            return CameraPreview(_controller);
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _takePictureAndAnalyze,
+        child: Icon(Icons.camera),
       ),
     );
   }
