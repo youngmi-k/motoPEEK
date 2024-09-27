@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'camera_controller.dart';
+import 'dart:io';
+import 'package:moto_peek/api/vision_api_service.dart'; // 서비스 클래스 임포트
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +35,13 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       //home: const MyHomePage(title: 'Flutter Demo Home Page'),
-      home: CameraScreen(),
+      home: Navigator(
+        pages: [
+          MaterialPage(child: CameraScreen()),
+          MaterialPage(child: ImageAnalyzerScreen()),
+        ],
+        onPopPage: (route, result) => route.didPop(result),
+      ),
     );
   }
 }
@@ -122,6 +130,33 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class ImageAnalyzerScreen extends StatelessWidget {
+  final VisionApiService _visionApiService = VisionApiService('AIzaSyA9uz_E1Ec9bysgKutXk5MOGI8HEi8coeQ');
+
+  void _analyzeImage(File image) {
+    _visionApiService.analyzeImage(image);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Image Analyzer'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            // 이미지를 촬영하거나 파일 선택 후 _analyzeImage 호출
+            File sampleImage = File('path_to_image');
+            _analyzeImage(sampleImage);
+          },
+          child: Text('Analyze Image'),
+        ),
+      ),
     );
   }
 }
