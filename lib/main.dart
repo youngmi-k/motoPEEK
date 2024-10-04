@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'camera_vertex_controller.dart';
+import 'camera_tflite_controller.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
