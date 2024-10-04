@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
-import 'vision_api_service.dart';
+import 'api/vision_api_service.dart';
 
 Future<void> _requestPermission() async {
   var status = await Permission.camera.status;
